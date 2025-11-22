@@ -1,0 +1,22 @@
+# Kafka
+confluent-kafka[avro,json,protobuf]
+
+# Web Framework
+fastapi
+uvicorn[standard]
+sse-starlette
+
+# Data Processing
+pandas
+
+# Utilities
+python-dotenv
+pydantic
+pydantic-settings
+
+# Development
+black
+pytest
+ruff
+# Type Checking
+mypy
