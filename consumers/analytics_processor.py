@@ -5,8 +5,8 @@ Calculates metrics and publishes aggregated data to analytics topic.
 
 import json
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Callable
+from datetime import datetime
+from typing import Dict, Any, Callable
 from collections import defaultdict
 from confluent_kafka import Consumer, Producer, KafkaError
 from config.kafka_config import CONSUMER_CONFIG, PRODUCER_CONFIG, TOPICS
@@ -17,7 +17,7 @@ from producers.event_schemas import (
     PurchaseEvent,
     SearchPerformedEvent,
 )
-from pydantic import ValidationError
+
 class AnalyticsProcessor:
     """Stream processor that calculates real-time metrics from store events."""
 

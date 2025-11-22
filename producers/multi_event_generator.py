@@ -27,19 +27,11 @@ class MultiEventProducer:
     # Event type distribution (probabilities sum to 1.0)
     # Based on realistic conversion funnel metrics
     EVENT_WEIGHTS = {
-        "game_page_viewed": 0.67,  # 67% - Most common event
-        "search_performed": 0.13,  # 13% - Users searching
-        "wishlist_action": 0.10,   # 10% - Wishlist adds/removes
-        "cart_action": 0.08,       # 8% - Cart modifications
-        "purchase": 0.02,          # 2% - Actual purchases (rare!)
-    }
-
-    EVENT_TYPE_TO_TOPIC = {
-      "game_page_viewed": "store.game-views",
-      "wishlist_action": "store.wishlist-events",
-      "cart_action": "store.cart-events",
-      "purchase": "store.purchases",
-      "search_performed": "store.searches",
+        "game_views": 0.67,  # 67% - Most common event
+        "searches": 0.13,  # 13% - Users searching
+        "wishlist_events": 0.10,   # 10% - Wishlist adds/removes
+        "cart_events": 0.08,       # 8% - Cart modifications
+        "purchases": 0.02,          # 2% - Actual purchases (rare!)
     }
 
     def __init__(self):
@@ -59,11 +51,11 @@ class MultiEventProducer:
             if self.events_sent % 100 == 0:
                 print(
                     f"✅ {self.events_sent} events sent | "
-                    f"Views: {self.event_counts['game_page_viewed']} | "
-                    f"Wishlist: {self.event_counts['wishlist_action']} | "
-                    f"Cart: {self.event_counts['cart_action']} | "
-                    f"Purchase: {self.event_counts['purchase']} | "
-                    f"Search: {self.event_counts['search_performed']}"
+                    f"Views: {self.event_counts['game_views']} | "
+                    f"Wishlist: {self.event_counts['wishlist_events']} | "
+                    f"Cart: {self.event_counts['cart_events']} | "
+                    f"Purchase: {self.event_counts['purchases']} | "
+                    f"Search: {self.event_counts['searches']}"
                 )
 
     def send_event(self, topic: str, event: Dict[str, Any], key: str = None):
@@ -259,11 +251,11 @@ class MultiEventProducer:
 
     def build_event_generators(self):
         return {
-            "game_page_viewed": self.generate_game_view_event,
-            "wishlist_action": self.generate_wishlist_action_event,
-            "cart_action": self.generate_cart_action_event,
-            "purchase": self.generate_purchase_event,
-            "search_performed": self.generate_search_event,
+            "game_views": self.generate_game_view_event,
+            "wishlist_events": self.generate_wishlist_action_event,
+            "cart_events": self.generate_cart_action_event,
+            "purchases": self.generate_purchase_event,
+            "searches": self.generate_search_event,
         }
 
     def generate_random_event(self) -> tuple[BaseModel, str, str]:
@@ -277,7 +269,7 @@ class MultiEventProducer:
         event_type = random.choices(event_types, weights=weights)[0]
         event_generator = self.build_event_generators()[event_type]
         event = event_generator()
-        topic = self.EVENT_TYPE_TO_TOPIC[event_type]
+        topic = TOPICS[event_type]
         self.event_counts[event_type] += 1
         return event, topic, event_type
 
@@ -292,7 +284,7 @@ class MultiEventProducer:
         print("🚀 Starting multi-event producer...")
         print(f"📊 Rate: {events_per_second} events/second (all types)")
         print(f"⏱️  Duration: {duration_seconds}s" if duration_seconds else "⏱️  Duration: Forever")
-        print(f"🎯 Topics: {len(self.EVENT_TYPE_TO_TOPIC)} topics\n")
+        print(f"🎯 Topics: {len(TOPICS)} topics\n")
 
         start_time = time.time()
         sleep_interval = 1.0 / events_per_second
