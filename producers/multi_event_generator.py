@@ -18,6 +18,7 @@ from producers.event_schemas import (
     SearchPerformedEvent,
 )
 from data.game_catalog import get_weighted_game_choices, get_purchase_source, CATEGORIES, SEARCH_QUERIES
+from pydantic import BaseModel
 
 
 class MultiEventProducer:
@@ -31,6 +32,14 @@ class MultiEventProducer:
         "wishlist_action": 0.10,   # 10% - Wishlist adds/removes
         "cart_action": 0.08,       # 8% - Cart modifications
         "purchase": 0.02,          # 2% - Actual purchases (rare!)
+    }
+
+    EVENT_TYPE_TO_TOPIC = {
+      "game_page_viewed": "store.game-views",
+      "wishlist_action": "store.wishlist-events",
+      "cart_action": "store.cart-events",
+      "purchase": "store.purchases",
+      "search_performed": "store.searches",
     }
 
     def __init__(self):
@@ -257,7 +266,7 @@ class MultiEventProducer:
             "search_performed": self.generate_search_event,
         }
 
-    def generate_random_event(self) -> tuple[Any, str, str]:
+    def generate_random_event(self) -> tuple[BaseModel, str, str]:
         """
         Generate a random event based on weighted probabilities.
         Returns tuple of (event_model, topic_name, event_type).
@@ -268,7 +277,7 @@ class MultiEventProducer:
         event_type = random.choices(event_types, weights=weights)[0]
         event_generator = self.build_event_generators()[event_type]
         event = event_generator()
-        topic = TOPICS[event_type]
+        topic = self.EVENT_TYPE_TO_TOPIC[event_type]
         self.event_counts[event_type] += 1
         return event, topic, event_type
 
@@ -283,7 +292,7 @@ class MultiEventProducer:
         print("🚀 Starting multi-event producer...")
         print(f"📊 Rate: {events_per_second} events/second (all types)")
         print(f"⏱️  Duration: {duration_seconds}s" if duration_seconds else "⏱️  Duration: Forever")
-        print(f"🎯 Topics: {len(TOPICS)} topics\n")
+        print(f"🎯 Topics: {len(self.EVENT_TYPE_TO_TOPIC)} topics\n")
 
         start_time = time.time()
         sleep_interval = 1.0 / events_per_second
@@ -294,17 +303,15 @@ class MultiEventProducer:
                     break
 
                 # Generate random event
-                result = self.generate_random_event()
+                event, topic, event_type = self.generate_random_event()
 
-                if result:  # Only send if event was generated
-                    event, topic, event_type = result
-                    if event:
-                        event_dict = event.model_dump()
-                        self.send_event(
-                            topic=topic,
-                            event=event_dict,
-                            key=event.userId,
-                        )
+                if event:
+                    event_dict = event.model_dump()
+                    self.send_event(
+                        topic=topic,
+                        event=event_dict,
+                        key=event.userId,
+                    )
 
                 time.sleep(sleep_interval)
 
@@ -332,4 +339,4 @@ if __name__ == "__main__":
 
     # Run for 60 seconds at 25 events/second (1500 total events)
     # This simulates realistic store traffic with all event types
-    producer.run(events_per_second=2500, duration_seconds=60)
+    producer.run(events_per_second=25, duration_seconds=60)
